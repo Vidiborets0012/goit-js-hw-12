@@ -4,7 +4,7 @@ import axios from "axios";
 const BASE_URL = "https://pixabay.com/api/";
 
 
-export const fetchPhotos = async (searchedQuery) => {
+export const fetchPhotos = async (searchedQuery, page = 1, per_page = 15) => {
     try {
 
         const axiosOptions = {
@@ -14,6 +14,8 @@ export const fetchPhotos = async (searchedQuery) => {
                 image_type: "photo",
                 orientation: "horizontal",
                 safesearch: "true",
+                page: page,
+                per_page: per_page,
             },
         };
 

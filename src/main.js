@@ -16,13 +16,19 @@ const gallery = document.querySelector('.gallery');
 
 const loader = document.querySelector('.loader');
 
+const loadMoreBtn = document.querySelector('.load-more-btn');
+
 let lightbox = new SimpleLightbox('.gallery a');
+
+let currentPage = 1;
+
+let searchedValue = '';
 
 
 const onSearchFormSubmit = async (event) => {
     event.preventDefault();
 
-    const searchedValue = searchForm.elements.user_query.value.trim();
+    searchedValue = searchForm.elements.user_query.value.trim();
     
     if (!searchedValue) {
         iziToast.error({
@@ -33,10 +39,14 @@ const onSearchFormSubmit = async (event) => {
         return;
     }
 
+    currentPage = 1;
+
+    loadMoreBtn.classList.add('is-hidden');
+
     loader.classList.remove('is-hidden');
 
     try {
-        const data = await fetchPhotos(searchedValue);
+        const data = await fetchPhotos(searchedValue, currentPage);
 
         loader.classList.add('is-hidden');
 
@@ -59,6 +69,8 @@ const onSearchFormSubmit = async (event) => {
             
         lightbox.refresh();
 
+        loadMoreBtn.classList.remove('is-hidden');
+
     } catch (error) {
         console.log(err);
         iziToast.error({
@@ -72,5 +84,32 @@ const onSearchFormSubmit = async (event) => {
 
 };
 
+const onLoadMoreBtnClick = async event => {
+    currentPage++;
+
+    try {
+        const data = await fetchPhotos(searchedValue, currentPage);
+       
+        loader.classList.add('is-hidden');
+
+        const galleryCardsTemplate = data.hits.map(imgDetails => createGalleryCardTemplate(imgDetails)).join('');
+
+        gallery.insertAdjacentHTML('beforeend', galleryCardsTemplate);
+            
+        lightbox.refresh();
+
+    } catch (error) {
+        console.log(error);
+        iziToast.error({
+            message: 'Something went wrong. Please try again later!',
+            position: 'topRight',
+            maxWidth: '500px',
+        });
+           
+        loader.classList.add('is-hidden');
+     };
+}
+
 searchForm.addEventListener('submit', onSearchFormSubmit);
+loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
 
