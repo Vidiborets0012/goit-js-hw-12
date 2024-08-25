@@ -19,14 +19,10 @@ const loader = document.querySelector('.loader');
 let lightbox = new SimpleLightbox('.gallery a');
 
 
-const onSearchFormSubmit = event => {
+const onSearchFormSubmit = async (event) => {
     event.preventDefault();
 
     const searchedValue = searchForm.elements.user_query.value.trim();
-// Покращення:
-// якщо searchedValue є пробілом, функція fetchPhotos все одно викликається,
-// що призводить до непотрібного API запиту.
-// Потрібно searchedValue перед запитом на бекенд трімнути і перевірити на порожній рядок
     
     if (!searchedValue) {
         iziToast.error({
@@ -39,45 +35,40 @@ const onSearchFormSubmit = event => {
 
     loader.classList.remove('is-hidden');
 
-// коли з бекенда приходить порожній масив, не вимикається лоадер і постійно крутиться.
+    try {
+        const data = await fetchPhotos(searchedValue);
 
-    fetchPhotos(searchedValue)
-        .then(data => {
-            // вимкнути лоадер
-            loader.classList.add('is-hidden');
-                      
-            if (data.hits.length === 0) {
-                iziToast.error({
-                    message: 'Sorry, there are no images matchings your search query. Please try againe!',
-                    position: 'topRight',
-                    maxWidth: '500px',
-                });
+        loader.classList.add('is-hidden');
 
-                gallery.innerHTML = '';
-                searchForm.reset();
-
-                return;
-            }
-
-            // loader.classList.add('is-hidden');
-
-            const galleryCardsTemplate = data.hits.map(imgDetails => createGalleryCardTemplate(imgDetails)).join('');
-
-            gallery.innerHTML = galleryCardsTemplate;
-            
-            lightbox.refresh();
-
-        })
-        .catch(err => {
-            console.log(err);
+        if (data.hits.length === 0) {
             iziToast.error({
-                message: 'Something went wrong. Please try again later!',
+                message: 'Sorry, there are no images matchings your search query. Please try againe!',
                 position: 'topRight',
                 maxWidth: '500px',
             });
-            // вимкнути лоадер у випадку помилки
-            loader.classList.add('is-hidden');
+
+            gallery.innerHTML = '';
+            searchForm.reset();
+
+            return;
+        }
+
+        const galleryCardsTemplate = data.hits.map(imgDetails => createGalleryCardTemplate(imgDetails)).join('');
+
+        gallery.innerHTML = galleryCardsTemplate;
+            
+        lightbox.refresh();
+
+    } catch (error) {
+        console.log(err);
+        iziToast.error({
+            message: 'Something went wrong. Please try again later!',
+            position: 'topRight',
+            maxWidth: '500px',
         });
+           
+        loader.classList.add('is-hidden');    
+    }
 
 };
 
