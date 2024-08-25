@@ -19,6 +19,7 @@ let lightbox = new SimpleLightbox('.gallery a');
 let currentPage = 1;
 let searchedValue = '';
 let totalHits = 0;
+let cardHeight = 0;
 
 
 const onSearchFormSubmit = async (event) => {
@@ -63,6 +64,9 @@ const onSearchFormSubmit = async (event) => {
 
         const galleryCardsTemplate = data.hits.map(imgDetails => createGalleryCardTemplate(imgDetails)).join('');
         gallery.innerHTML = galleryCardsTemplate;
+
+        const galleryCard = gallery.querySelector('li');
+        cardHeight = galleryCard.getBoundingClientRect().height;
             
         lightbox.refresh();
 
@@ -103,6 +107,12 @@ const onLoadMoreBtnClick = async event => {
         gallery.insertAdjacentHTML('beforeend', galleryCardsTemplate);
             
         lightbox.refresh();
+
+        
+        scrollBy({
+            top: cardHeight * 2,
+            behavior: 'smooth'
+        });
 
         if (currentPage * 15 >= totalHits) {
             loadMoreBtn.classList.add('is-hidden');
