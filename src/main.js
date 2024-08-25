@@ -11,18 +11,14 @@ import "simplelightbox/dist/simple-lightbox.min.css";
 
 
 const searchForm = document.querySelector('.search-form');
-
 const gallery = document.querySelector('.gallery');
-
 const loader = document.querySelector('.loader');
-
 const loadMoreBtn = document.querySelector('.load-more-btn');
 
 let lightbox = new SimpleLightbox('.gallery a');
-
 let currentPage = 1;
-
 let searchedValue = '';
+let totalHits = 0;
 
 
 const onSearchFormSubmit = async (event) => {
@@ -63,14 +59,23 @@ const onSearchFormSubmit = async (event) => {
             return;
         }
 
-        const galleryCardsTemplate = data.hits.map(imgDetails => createGalleryCardTemplate(imgDetails)).join('');
+        totalHits = data.totalHits;
 
+        const galleryCardsTemplate = data.hits.map(imgDetails => createGalleryCardTemplate(imgDetails)).join('');
         gallery.innerHTML = galleryCardsTemplate;
             
         lightbox.refresh();
 
-        loadMoreBtn.classList.remove('is-hidden');
-
+        if (currentPage * 15 >= totalHits) {
+            iziToast.info({
+                message: "We're sorry, but you've reached the end of search results.",
+                position: 'topRight',
+                maxWidth: '500px',
+            });
+        } else {
+            loadMoreBtn.classList.remove('is-hidden');
+        }
+        
     } catch (error) {
         console.log(err);
         iziToast.error({
@@ -86,6 +91,7 @@ const onSearchFormSubmit = async (event) => {
 
 const onLoadMoreBtnClick = async event => {
     currentPage++;
+    loader.classList.remove('is-hidden');
 
     try {
         const data = await fetchPhotos(searchedValue, currentPage);
@@ -97,6 +103,15 @@ const onLoadMoreBtnClick = async event => {
         gallery.insertAdjacentHTML('beforeend', galleryCardsTemplate);
             
         lightbox.refresh();
+
+        if (currentPage * 15 >= totalHits) {
+            loadMoreBtn.classList.add('is-hidden');
+            iziToast.info({
+                message: "We're sorry, but you've reached the end of search results.",
+                position: 'topRight',
+                maxWidth: '500px',
+            });
+        } 
 
     } catch (error) {
         console.log(error);
